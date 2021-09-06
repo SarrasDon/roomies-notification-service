@@ -1,0 +1,5 @@
+ExpensesQueueIAM:
+  Effect: Allow
+  Action:
+    - sqs:ReceiveMessage
+  Resource: ${self:custom.expensesQueue.arn}

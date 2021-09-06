@@ -1,0 +1,43 @@
+service: roomies-notification-service
+
+plugins:
+  - serverless-bundle
+  - serverless-pseudo-parameters
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  memorySize: 256
+  stage: ${opt:stage, 'dev'}
+  lambdaHashingVersion: 20201221
+  region: eu-central-1
+
+resources:
+  Resources:
+    ExpensesQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:custom.expensesQueue.name}
+  Outputs:
+    ExpensesQueueArn:
+      Value: ${self:custom.expensesQueue.arn}
+      Export:
+        Name: ${self:custom.expensesQueue.name}-Arn
+    ExpensesQueueUrl:
+      Value: ${self:custom.expensesQueue.url}
+      Export:
+        Name: ${self:custom.expensesQueue.name}-Url
+
+functions:
+  sendNotification:
+    handler: src/handlers/sendNotification.handler
+    events:
+      - sqs:
+          arn: ${self:custom.expensesQueue.arn}
+          batchSize: 1
+
+custom:
+  expensesQueue:
+    name: ExpensesQueue-${self:provider.stage}
+    arn: !GetAtt ExpensesQueue.Arn
+    url: !Ref ExpensesQueue
